@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/SchoolManagementSystem
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+
+jwt:
+  signerKey: "Nv/QGmjsOecqe9w4Z1H0FKzHnwIEZML+1ea7O7Bx2rmctoDIqFmKGk0DOuOZPdbH"
