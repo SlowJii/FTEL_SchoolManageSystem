@@ -2,6 +2,7 @@ package com.FTEL.SchoolManagementSystem.controller;
 
 import com.FTEL.SchoolManagementSystem.dto.request.UserCreationRequest;
 import com.FTEL.SchoolManagementSystem.dto.request.UserUpdateRequest;
+import com.FTEL.SchoolManagementSystem.model.Course;
 import com.FTEL.SchoolManagementSystem.model.User;
 import com.FTEL.SchoolManagementSystem.service.UserService;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -15,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @RestController
@@ -59,6 +61,30 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/myinfo")
+    public ResponseEntity<User> getMyInfo() {
+        User user = userService.getUserInfo();
+        return ResponseEntity.status(HttpStatus.OK).body(user);
+    }
+
+    @PostMapping("/{userId}/getcourses/{courseId}")
+    public ResponseEntity<User> addCourseToUser(@PathVariable Long userId, @PathVariable Long courseId) {
+        User user = userService.addCourseToUser(userId, courseId);
+        return ResponseEntity.ok(user);
+    }
+
+    @DeleteMapping("/{userId}/deletecourses/{courseId}")
+    public ResponseEntity<User> removeCourseFromUser(@PathVariable Long userId, @PathVariable Long courseId) {
+        User user = userService.removeCourseFromUser(userId, courseId);
+        return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/{userId}/courses")
+    public ResponseEntity<Set<Course>> getCoursesByUserId(@PathVariable Long userId) {
+        Set<Course> courses = userService.getCoursesByUserId(userId);
+        return ResponseEntity.ok(courses);
     }
 }
 

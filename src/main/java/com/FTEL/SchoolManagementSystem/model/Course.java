@@ -1,13 +1,14 @@
 package com.FTEL.SchoolManagementSystem.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Setter
@@ -22,4 +23,8 @@ public class Course {
     private String courseName;
     private int credit;
     private int seatAvailable = 10;
+
+    @ManyToMany(mappedBy = "courses", fetch = FetchType.LAZY)
+    @JsonBackReference
+    private Set<User> users = new HashSet<>();
 }

@@ -36,7 +36,12 @@ public class SecurityConfig {
         httpSecurity.authorizeHttpRequests(request ->
                 request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
                         .requestMatchers(HttpMethod.GET, "/users").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, "/users").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/users").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/courses").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, "/courses").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, "/courses").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, "/courses").hasRole(Role.ADMIN.name())
                         .anyRequest().authenticated());
 
         httpSecurity.oauth2ResourceServer(oauth2 ->

@@ -4,7 +4,11 @@ import com.FTEL.SchoolManagementSystem.Utils.StringUtils;
 import com.FTEL.SchoolManagementSystem.dto.request.UserCreationRequest;
 import com.FTEL.SchoolManagementSystem.dto.request.UserUpdateRequest;
 import com.FTEL.SchoolManagementSystem.enums.Role;
+import com.FTEL.SchoolManagementSystem.exception.AppException;
+import com.FTEL.SchoolManagementSystem.exception.ErrorCode;
+import com.FTEL.SchoolManagementSystem.model.Course;
 import com.FTEL.SchoolManagementSystem.model.User;
+import com.FTEL.SchoolManagementSystem.repository.CourseRepository;
 import com.FTEL.SchoolManagementSystem.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -18,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class UserService {
@@ -26,6 +31,9 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     public User createUser(UserCreationRequest userCreationRequest){
         User user = new User();
@@ -119,4 +127,44 @@ public class UserService {
         }
     }
 
+    public User getUserInfo() {
+        var context = SecurityContextHolder.getContext();
+        String name = context.getAuthentication().getName();
+
+        return userRepository.findByUsername(name).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    }
+
+    public User addCourseToUser(Long userId, Long courseId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found"));
+        if (course.getUsers().contains(user)) {
+            throw new RuntimeException("User already registered for this course!");
+        }
+        if (course.getSeatAvailable() <= 0) {
+            throw new RuntimeException("No seats available for this course!");
+        }
+        course.setSeatAvailable(course.getSeatAvailable() - 1);
+        user.getCourses().add(course);
+        course.getUsers().add(user); // Add user to course
+        courseRepository.save(course); // Save changes to course
+        return userRepository.save(user); // Save changes to user
+    }
+
+    public User removeCourseFromUser(Long userId, Long courseId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found"));
+        if (!course.getUsers().contains(user)) {
+            throw new RuntimeException("User is not registered for this course!");
+        }
+        course.setSeatAvailable(course.getSeatAvailable() + 1);
+        user.getCourses().remove(course);
+        course.getUsers().remove(user); // Remove user from course
+        courseRepository.save(course); // Save changes to course
+        return userRepository.save(user); // Save changes to user
+    }
+
+    public Set<Course> getCoursesByUserId(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getCourses();
+    }
 }

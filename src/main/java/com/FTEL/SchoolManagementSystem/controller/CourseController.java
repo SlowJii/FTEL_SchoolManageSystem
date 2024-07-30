@@ -2,7 +2,9 @@ package com.FTEL.SchoolManagementSystem.controller;
 
 import com.FTEL.SchoolManagementSystem.dto.request.CourseRequest;
 import com.FTEL.SchoolManagementSystem.model.Course;
+import com.FTEL.SchoolManagementSystem.model.User;
 import com.FTEL.SchoolManagementSystem.service.CourseService;
+import com.FTEL.SchoolManagementSystem.service.CourseUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,9 @@ import java.util.*;
 public class CourseController {
     @Autowired
     CourseService courseService;
+
+    @Autowired
+    CourseUserService courseUserService;
 
     @PostMapping
     public ResponseEntity<Course> createCourse(@RequestBody CourseRequest request){
@@ -45,5 +50,29 @@ public class CourseController {
     public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
         courseService.deleteCourse(courseId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{courseId}/getusers/{userId}")
+    public ResponseEntity<Course> addUserToCourse(@PathVariable Long courseId, @PathVariable Long userId) {
+        Course course = courseUserService.addUserToCourse(userId, courseId);
+        return ResponseEntity.ok(course);
+    }
+
+    @DeleteMapping("/{courseId}/deleteusers/{userId}")
+    public ResponseEntity<Course> removeUserFromCourse(@PathVariable Long courseId, @PathVariable Long userId) {
+        Course course = courseUserService.removeUserFromCourse(userId, courseId);
+        return ResponseEntity.ok(course);
+    }
+
+    @GetMapping("/{courseId}/users")
+    public ResponseEntity<Set<User>> getUsersOfCourse(@PathVariable Long courseId) {
+        Set<User> users = courseService.getUsersByCourseId(courseId);
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/most-popular")
+    public ResponseEntity<Course> getMostPopularCourse() {
+        Course course = courseService.getMostPopularCourse();
+        return ResponseEntity.ok(course);
     }
 }
