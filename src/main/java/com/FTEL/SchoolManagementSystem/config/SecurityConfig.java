@@ -25,10 +25,9 @@ import javax.crypto.spec.SecretKeySpec;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final String[] PUBLIC_ENDPOINT = {"/users",
-            "/auth/token", "/auth/introspect"};
+    private final String[] PUBLIC_ENDPOINT = {"/users", "/auth/token", "/auth/introspect"};
 
-    @Value("${jwt.signerKey}") //doc bien tu file yaml
+    @Value("${jwt.signerKey}") // đọc biến từ file yaml
     private String SIGNER_KEY;
 
     @Bean
@@ -48,9 +47,9 @@ public class SecurityConfig {
                 oauth2.jwt(jwtConfigurer ->
                         jwtConfigurer.decoder(jwtDecoder())
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                );
+        );
 
-        httpSecurity.csrf(AbstractHttpConfigurer::disable); //csrf bao ve endpoint truc cac attach
+        httpSecurity.csrf(AbstractHttpConfigurer::disable); // csrf bảo vệ endpoint tránh các tấn công
         return httpSecurity.build();
     }
 

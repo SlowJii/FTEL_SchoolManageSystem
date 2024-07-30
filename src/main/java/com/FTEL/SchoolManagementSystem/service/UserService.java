@@ -18,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -54,11 +55,11 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    @PreAuthorize("#username == authentication.name")
+    @PreAuthorize("hasRole('ADMIN') or #username == authentication.name")
     public User updateUser(UserUpdateRequest request, Long userId, String username){
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!username.equals(user.getUsername())) {
+        if (!username.equals(user.getUsername()) && !isAdmin()) {
             throw new RuntimeException("Bạn không có quyền cập nhật người dùng này");
         }
 
@@ -95,15 +96,16 @@ public class UserService {
         return userRepository.save(user);
     }
 
+
     public List<User> getAllUsers(){
 
         return userRepository.findAll();
     }
 
-    @PreAuthorize("#username == authentication.name")
+    @PreAuthorize("hasRole('ADMIN') or #username == authentication.name")
     public Optional<User> getUserById(Long userId, String username){
         Optional<User> user = userRepository.findById(userId);
-        if (user.isPresent() && !username.equals(user.get().getUsername())) {
+        if (user.isPresent() && !username.equals(user.get().getUsername()) && !isAdmin()) {
             throw new RuntimeException("Bạn không có quyền xem người dùng này");
         }
         return user;
@@ -134,8 +136,13 @@ public class UserService {
         return userRepository.findByUsername(name).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 
-    public User addCourseToUser(Long userId, Long courseId) {
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN') or #username == authentication.name")
+    public User addCourseToUser(Long userId, Long courseId, String username) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        if (!username.equals(user.getUsername()) && !isAdmin()) {
+            throw new RuntimeException("Bạn không có quyền đăng ký khóa học này");
+        }
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found"));
         if (course.getUsers().contains(user)) {
             throw new RuntimeException("User already registered for this course!");
@@ -145,26 +152,40 @@ public class UserService {
         }
         course.setSeatAvailable(course.getSeatAvailable() - 1);
         user.getCourses().add(course);
-        course.getUsers().add(user); // Add user to course
-        courseRepository.save(course); // Save changes to course
-        return userRepository.save(user); // Save changes to user
+        course.getUsers().add(user);
+        courseRepository.save(course);
+        return userRepository.save(user);
     }
 
-    public User removeCourseFromUser(Long userId, Long courseId) {
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN') or #username == authentication.name")
+    public User removeCourseFromUser(Long userId, Long courseId, String username) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        if (!username.equals(user.getUsername()) && !isAdmin()) {
+            throw new RuntimeException("Bạn không có quyền hủy đăng ký khóa học này");
+        }
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found"));
         if (!course.getUsers().contains(user)) {
             throw new RuntimeException("User is not registered for this course!");
         }
         course.setSeatAvailable(course.getSeatAvailable() + 1);
         user.getCourses().remove(course);
-        course.getUsers().remove(user); // Remove user from course
-        courseRepository.save(course); // Save changes to course
-        return userRepository.save(user); // Save changes to user
+        course.getUsers().remove(user);
+        courseRepository.save(course);
+        return userRepository.save(user);
     }
 
-    public Set<Course> getCoursesByUserId(Long userId) {
+    @PreAuthorize("hasRole('ADMIN') or #username == authentication.name")
+    public Set<Course> getCoursesByUserId(Long userId, String username) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        if (!username.equals(user.getUsername()) && !isAdmin()) {
+            throw new RuntimeException("Bạn không có quyền xem các khóa học của người dùng này");
+        }
         return user.getCourses();
+    }
+
+    private boolean isAdmin() {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
     }
 }
